@@ -2,9 +2,9 @@
 import SignInSchema from '@/schema/SignInSchema';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { set, z } from 'zod';
+import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import axios from 'axios';
+import {Spinner} from "@nextui-org/spinner";
 import {
   Form,
   FormControl,
@@ -93,7 +93,7 @@ export default function Page() {
               )}
             />
             <Button type='submit' className='w-full bg-blue-600 rounded-full px-4 py-2 text-white hover:bg-blue-700 transition'>
-              Submit
+             {submitting ? <Spinner color='white'/>  : 'Login'} 
             </Button>
           </form>
         </Form>

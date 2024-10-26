@@ -13,7 +13,9 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@nextui-org/avatar": "^2.0.33",
     "@nextui-org/button": "^2.0.38",
+    "@nextui-org/spinner": "^2.0.34",
     "@nextui-org/system": "^2.2.6",
     "@nextui-org/theme": "^2.2.11",
     "@prisma/client": "^5.21.1",
