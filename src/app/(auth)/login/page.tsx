@@ -1,10 +1,10 @@
 'use client';
 import SignInSchema from '@/schema/SignInSchema';
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { set, z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-
+import axios from 'axios';
 import {
   Form,
   FormControl,
@@ -17,8 +17,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from '@nextui-org/button';
 import Image from 'next/image';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation'
+import { toast } from 'react-hot-toast';
+
+
 
 export default function Page() {
+  const [submitting , setSubmitting] = useState(false);
+  const router = useRouter();
   const form = useForm<z.infer<typeof SignInSchema>>({
     resolver: zodResolver(SignInSchema),
     defaultValues: {
@@ -27,16 +34,36 @@ export default function Page() {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof SignInSchema>) => {
-    console.log(data);
+  const onSubmit = async (data: z.infer<typeof SignInSchema>) => {
+    setSubmitting(true);
+    try {
+      const result = await signIn('credentials', {
+        redirect: false,
+       ...data
+      }) ;
+      if (result?.error) {
+        console.log(result);
+        toast.error("invalid credentials");
+      } else {
+        toast.success("login successfull");
+          router.push("/")
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("something went wrong");
+    }finally{
+      setSubmitting(false);
+    }
   };
 
   return (
     <main className='flex items-center justify-center min-h-screen bg-gray-100'>
-      <section className='flex flex-col gap-4 w-full max-w-md px-10 py-12 bg-white rounded-lg shadow-lg '>
+      <section className='flex flex-col gap-2 w-full max-w-md px-10 py-12 bg-white rounded-3xl shadow-lg '>
         <img src="/logo.png" alt="logo" className='w-2/3 h-auto mx-auto' />
         <h2 className="text-center text-lg text-gray-600">Welcome back to Discount !!</h2>
-
+        <div className="flex items-center justify-center my-4">
+          <hr className="border-gray-300 w-full" />
+        </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
             <FormField
@@ -81,10 +108,17 @@ export default function Page() {
           <hr className="border-gray-300 w-1/4" />
         </div>
         <div className="flex items-center justify-center">
-          <Button className="flex items-center justify-center w-full bg-white border border-gray-300 rounded-full px-4 py-2 text-gray-800 shadow-md transition">
-            <Image src="/google.svg" alt="google" width={25} height={25} className="mr-2" />
-            Continue with Google
-          </Button>
+        <Button
+          onClick={() => {
+            signIn('google', { redirectTo: '/' }).catch((error) =>
+              console.error('Google login failed:', error)
+            );
+          }}
+          className="flex items-center justify-center w-full bg-white border border-gray-300 rounded-full px-4 py-2 text-gray-800 shadow-md transition"
+        >
+          <Image src="/google.svg" alt="google" width={25} height={25} className="mr-2" />
+          Continue with Google
+        </Button>
         </div>
       </section>
     </main>
