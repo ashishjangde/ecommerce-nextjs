@@ -1,13 +1,11 @@
+'use client';
+import { useParams } from 'next/navigation';
 import React from 'react';
 
-interface ProductPageProps {
-  params: {
-    productId: string;
-  };
-}
-
-export default function Page({ params: { productId } }: ProductPageProps) {
-  return (
-    <h1>Product Details for {productId}</h1>
-  );
+export default function ProductPage() {
+    const { productId } = useParams<{ productId: string }>();
+  
+    return (
+        <div>result for {productId}</div>
+    );
 }

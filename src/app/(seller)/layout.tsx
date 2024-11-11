@@ -1,29 +1,26 @@
 'use client';
-import { useState } from 'react';
+
+import { ReactNode } from 'react';
 import MenuBar from '@/components/menuBar/MenuBar';
+import { MenuBarProvider } from '@/context/MenuBarContext';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import ContentWrapper from './_wrapper/ContentWrapper';
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  const handleCollapse = (collapsed: boolean) => {
-    setIsCollapsed(collapsed);
-  };
-
   return (
-    <div className="flex">
-      <MenuBar onCollapse={handleCollapse} />
-
-      <div
-        className={`transition-all duration-300 flex-1 ${
-          isCollapsed ? 'ml-20' : 'ml-[275px]'
-        }`}
-      >
-        {children}
-      </div>
-    </div>
+    <MenuBarProvider>
+      <DndProvider backend={HTML5Backend}>
+        <div className="flex">
+          <MenuBar />
+          <ContentWrapper>{children}</ContentWrapper>
+        </div>
+      </DndProvider>
+    </MenuBarProvider>
   );
 }
+

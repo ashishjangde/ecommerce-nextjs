@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
+import { useMenuBar } from '@/context/MenuBarContext';
 
 interface MenuItems {
   name: string;
@@ -63,22 +64,9 @@ const NavItem = ({
   </Link>
 );
 
-export default function MenuBar({
-  onCollapse,
-}: {
-  onCollapse: (isCollapsed: boolean) => void;
-}) {
+export default function MenuBar() {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  useEffect(() => {
-    console.log('Navigated to:', pathname);
-  }, [pathname]);
-
-  const toggleCollapse = () => {
-    setIsCollapsed((prev) => !prev);
-    onCollapse(!isCollapsed);
-  };
+  const { isCollapsed, toggleCollapse } = useMenuBar(); // Use context instead of local state
 
   const menuItems: MenuItems[] = [
     { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard strokeWidth={1.5} /> },
@@ -90,6 +78,10 @@ export default function MenuBar({
     { name: 'Reviews', href: '/seller/reviews', icon: <Star strokeWidth={1.5} /> },
   ];
 
+  useEffect(() => {
+    console.log('Navigated to:', pathname);
+  }, [pathname]);
+
   return (
     <aside
       className={`h-screen flex flex-col fixed left-0 bg-white border-r border-gray-200
@@ -99,7 +91,7 @@ export default function MenuBar({
       <div className="flex items-center justify-between border-b border-gray-200 h-16 px-6">
         {!isCollapsed && <h1 className="text-xl font-semibold text-gray-800">Seller</h1>}
         <button
-          onClick={toggleCollapse}
+          onClick={toggleCollapse} // Call toggleCollapse from context
           className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200"
           aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
         >

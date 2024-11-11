@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect} from 'react'
 import Link from 'next/link'
 import { AlignLeft, X, Search, Heart, ShoppingCart, Store, TrendingUp, FileText, User, LogOut, LogIn, MoveLeft } from 'lucide-react'
 import { Input } from '../../ui/input'
