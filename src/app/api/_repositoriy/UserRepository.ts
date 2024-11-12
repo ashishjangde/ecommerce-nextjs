@@ -1,5 +1,5 @@
-import prisma from "@/db/connectDb.js";
-import { handleDatabaseOperation } from "../_utils/handelDatabaseOperation.js";
+import prisma from "@/db/connectDb";
+import handleDatabaseOperation from "../_utils/handelDatabaseOperation";
 import { User } from "@prisma/client"
 
 

@@ -7,21 +7,21 @@ import EmailAndVerificationCodeSchema from "@/schema/EmailAndVerificationCodeSch
 import { NextResponse } from "next/server";
 
 export const POST = asyncHandler(async (req) => {
-
-    const result = EmailAndVerificationCodeSchema.safeParse(req.body);
+    const body = await req.json();
+    const result = EmailAndVerificationCodeSchema.safeParse(body);
     if (!result.success) {
         const error =  formatValidationErrors(result.error);
         throw new ApiError(400, "validation error", error );
     }
-    const { email , code } = result.data;
+    const { email , verificationCode } = result.data;
     const user = await userRepository.getUserByEmail(email);
     if(!user){
         throw new ApiError(400, "user not found");
     }
-    if(user.isVerified){
-        throw new ApiError(400, "user already verified");
+    if(!user.isVerified){
+        throw new ApiError(400, "user not  verified");
     }
-    if(user.verificationCode !== code){
+    if(user.verificationCode !== verificationCode){
         throw new ApiError(400, "invalid code");
     }
     if(user.codeExpireAt! < new Date()){

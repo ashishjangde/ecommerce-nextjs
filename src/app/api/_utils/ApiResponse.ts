@@ -5,7 +5,7 @@ export class ApiResponse<T> {
     public data?: T | null;
     public apiError?: ApiError | null;
 
-    constructor(data?: any, apiError?: ApiError) {
+    constructor(data?: T, apiError?: ApiError) {
         this.localDateTime = new Date().toISOString(); 
 
         if (data) {

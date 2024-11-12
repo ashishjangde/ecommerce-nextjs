@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { signIn } from 'next-auth/react'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
+import { ApiResponse } from '@/app/api/_utils/ApiResponse'
 
 export default function Page() {
   const router = useRouter()
@@ -35,31 +36,40 @@ export default function Page() {
     }
   })
 
-  const onSubmit = async(data: z.infer<typeof SignUpSchema>) => {
-     setSubmitting(true) 
+  const onSubmit = async (data: z.infer<typeof SignUpSchema>) => {
+    setSubmitting(true);
+    
     try {
-       const response = await axios.post('/api/auth/signup', data)
-       if (response.status === 201) {
-         toast.success('Account created successfully')
-         router.push('/login')
-       }else{
-        console.log(response.data.message)
-         toast.error(response.data.message)
-       }
-
-     } catch (error) {
-      toast.error("something went wrong")
-      console.log(error)
-     }finally{
-      setSubmitting(false)
-     }
-  }
+      const response = await axios.post<ApiResponse<typeof SignUpSchema>>('/api/auth/signup', data);
+      
+      if (response.status === 201 && response.data) {
+        if (response.data.apiError) {
+          toast.error(response.data.apiError.message);
+        } else {
+          toast.success('Account created successfully');
+          router.push('/login');
+        }
+      }
+    } catch (error) {
+      console.error("An error occurred:", error);
+      if (error instanceof AxiosError && error.response) {
+        const apiError = error.response.data as ApiResponse<null>;
+        toast.error(apiError.apiError?.message || "Something went wrong");
+      } else {
+        console.error("An unexpected error occurred:", error);
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  
 
   return (
     <main className='flex items-center justify-center min-h-screen bg-gray-100'>
       <section className='flex flex-col gap-2 w-full max-w-md px-10 py-7 bg-white rounded-3xl shadow-lg'>
       <h1 className='text-4xl text-center font-bold text-gray-800 dark:text-gray-100'>NextStore</h1>
-        <h2 className="text-center text-lg text-gray-600">Welcome to Discount !!</h2>
+        <h2 className="text-center text-lg text-gray-600">Welcome to NextStore !!</h2>
             <div className="flex items-center justify-center my-4">
           <hr className="border-gray-300 w-full" />
         </div>

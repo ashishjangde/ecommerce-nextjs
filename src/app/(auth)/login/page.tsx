@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast';
+import { CredentialsSignin } from 'next-auth';
 
 
 
@@ -39,28 +40,31 @@ export default function Page() {
     try {
       const result = await signIn('credentials', {
         redirect: false,
-       ...data
-      }) ;
+        ...data
+      });
+  
       if (result?.error) {
         console.log(result);
-        toast.error("invalid credentials");
+        toast.error(result.code || "An error occurred during login.");
       } else {
-        toast.success("login successfull");
-          router.push("/")
+        toast.success("Login successful");
+        router.push("/");
       }
     } catch (error) {
-      console.log(error);
-      toast.error("something went wrong");
-    }finally{
+     if (error instanceof CredentialsSignin) {
+        toast.error(error.message);
+      }
+    } finally {
       setSubmitting(false);
     }
   };
+  
 
   return (
     <main className='flex items-center justify-center min-h-screen bg-gray-100'>
       <section className='flex flex-col gap-2 w-full max-w-md px-10 py-12 bg-white rounded-3xl shadow-lg '>
       <h1 className='text-4xl text-center font-bold text-gray-800 dark:text-gray-100'>NextStore</h1>
-        <h2 className="text-center text-lg text-gray-600">Welcome back to Discount !!</h2>
+        <h2 className="text-center text-lg text-gray-600">Welcome back to NextStore !!</h2>
         <div className="flex items-center justify-center my-4">
           <hr className="border-gray-300 w-full" />
         </div>
@@ -99,7 +103,7 @@ export default function Page() {
         </Form>
 
         <div className="flex justify-between text-sm text-gray-100">
-          <Link href="/forget-password" className="hover:underline text-blue-600">Forgot Password?</Link>
+          <Link href="/forgot-password" className="hover:underline text-blue-600">Forgot Password?</Link>
           <Link href="/signup" className='text-gray-600'>Dont have an account?<span className='text-blue-600 hover:underline'> Sign Up</span></Link>
         </div>
         <div className="flex items-center justify-center my-4">

@@ -4,12 +4,13 @@ import { ApiError } from "../../_utils/ApiError";
 import { formatValidationErrors } from "../../_utils/FormatValidationError";
 import { userRepository } from "../../_repositoriy/UserRepository";
 import { NextResponse } from "next/server";
-import EmailVerificationSchema from "@/schema/EmailverifiactionSchema";
+import EmailVerificationSchema from "@/schema/EmailVerifiactionSchema";
 import { genrateVerificationCode, genrateVerificationCodeExpiry } from "../../_helper/VerificationCodeHelper";
 
 
 export const POST = asyncHandler(async (req) => {
-    const result = EmailVerificationSchema.safeParse(req.body);
+    const body = await req.json();
+    const result = EmailVerificationSchema.safeParse(body);
     if (!result.success) {
         const error =  formatValidationErrors(result.error);
         throw new ApiError(400, "validation error", error );

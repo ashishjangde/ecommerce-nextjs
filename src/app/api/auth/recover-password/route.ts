@@ -5,11 +5,12 @@ import ForgotPasswordSchema from "@/schema/ForgotPasswordBackendSchema";
 import { userRepository } from "../../_repositoriy/UserRepository";
 import { NextResponse } from "next/server";
 import { formatValidationErrors } from "../../_utils/FormatValidationError";
-import { hashPassword } from "@/helpers/PasswordHelper";
+import { hashPassword } from "@/app/api/_helper/PasswordHelper";
 
 
 export const POST = asyncHandler(async (req) => {
-   const result = ForgotPasswordSchema.safeParse(req.body);
+    const body = await req.json();
+   const result = ForgotPasswordSchema.safeParse(body);
    if (!result.success) {
        const error =  formatValidationErrors(result.error);
        throw new ApiError(400, "validation error", error );

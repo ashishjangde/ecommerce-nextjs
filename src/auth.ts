@@ -1,9 +1,24 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import prisma from "./db/connectDb";
-import { comparePassword } from "./helpers/PasswordHelper";
+import { userRepository } from "./app/api/_repositoriy/UserRepository";
+import bcryptjs from "bcryptjs";
 import { UserRole } from "@prisma/client";
+import { CredentialsSignin } from "next-auth"
+
+
+
+export class CustomError extends CredentialsSignin {
+  code: string;
+
+  constructor(code: string) {
+    super("CredentialsSignin"); 
+    this.code = code; 
+  
+  }
+}
+
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     GoogleProvider({
@@ -20,17 +35,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorize: async (credentials) => {
         const email = credentials?.email as string;
         const password = credentials?.password as string;
-
-        if (!email || !password) return null;
-
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user || !user.password) return null;
-
-        const isMatched = await comparePassword(password, user.password);
-        if (!isMatched) return null;
-
+      
+        if (!email || !password) {
+          throw new CustomError( "Email and password are required" );
+        }
+        const user = await userRepository.getUserByEmail(email);
+      
+        if (!user) {
+         throw new CustomError( "email not found");
+        }
+      
+        if (!user.isVerified) {
+         throw new CustomError( "You are not verified !!");
+        }
+      
+        if (!user.password) {
+          throw new CustomError( "You have to login with credentials provider");
+        }
+        
+        const isMatched = await bcryptjs.compare(password, user.password);
+       
+        if (!isMatched) {
+          throw new CustomError( "Invalid password");
+        }
+      
         return { id: user.id, name: user.name, email: user.email, roles: user.roles, profilePicture: user.profilePicture };
       },
+      
     }),
   ],
 
@@ -63,28 +94,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        const existingUser = await prisma.user.findUnique({ where: { email: user.email! } });
+        const existingUser = await userRepository.getUserByEmail(user.email!);
         
         if (!existingUser) {
-          await prisma.user.create({
-            data: {
+          await userRepository.createUser({
               email: user.email!,
               name: user.name!,
               profilePicture: user.image!,
               isVerified: true,
               roles: [UserRole.CUSTOMER],
-            },
           });
         } else {
           user.roles = existingUser.roles; 
         }
         return true;
       }
-
+      
       if (account?.provider === "credentials") {
         return true;
       }
       return false;
     },
+  },
+
+  logger: {
+    error(){
+
+    }
   },
 });

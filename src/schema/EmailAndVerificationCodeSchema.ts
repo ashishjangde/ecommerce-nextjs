@@ -5,7 +5,7 @@ const EmailAndVerificationCodeSchema = z.object({
         .string()
         .min(1, { message: 'Email is required' })
         .email({ message: 'Email is invalid' }),
-    code: z
+    verificationCode: z
         .string()
         .min(1, { message: 'Code is required' })
         .min(6, { message: 'Code must be at least 6 characters' }),

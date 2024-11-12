@@ -1,31 +1,24 @@
-import { NextRequest , NextResponse  } from "next/server";
-import { ApiError } from "./ApiError";
+import { NextRequest, NextResponse } from "next/server";
 import { ApiResponse } from "./ApiResponse";
+import { ApiError } from "./ApiError";
 
-type AsyncRequestHandler = (req: NextRequest , res: NextResponse) => Promise<Response | void>;
+type AsyncHandler= (req: NextRequest) => Promise<NextResponse>;
 
-const asyncHandler = (requestHandler: AsyncRequestHandler) => {
-    return (req: NextRequest , res: NextResponse) => {
-      Promise.resolve(requestHandler(req , res))
-            .catch(error =>{
-                if (error instanceof ApiError) {
-                    return NextResponse.json(new ApiResponse(
-                        null,
-                         new ApiError(error.statusCode, error.message, error.subMessage)),
-                          {
-                             status: error.statusCode 
-                        });
-                }else{
-                    console.log(error);
-                    return NextResponse.json(new ApiResponse(
-                        null,
-                         new ApiError(500, "something went wrong")),
-                          {
-                             status: 500 
-                        });
-                }
-            });
-    };
+
+const asyncHandler = (fn: AsyncHandler): AsyncHandler => async (req) => {
+  try {
+    return await fn(req);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return NextResponse.json(new ApiResponse<null>(null, error), { status: error.statusCode });
+    }
+
+    console.error("Unexpected error:", error);
+    return NextResponse.json(
+      new ApiResponse<null>(null, new ApiError(500, "Internal server error")),
+      { status: 500 }
+    );
+  }
 };
 
 export default asyncHandler;
