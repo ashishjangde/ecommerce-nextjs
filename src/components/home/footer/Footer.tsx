@@ -6,7 +6,7 @@ import { Truck, CreditCard, RefreshCw } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <div className="bg-white text-gray-800 py-6 mt-80">
+    <div className="bg-white text-gray-800 py-6 ">
 
       <Divider orientation="horizontal" />
 

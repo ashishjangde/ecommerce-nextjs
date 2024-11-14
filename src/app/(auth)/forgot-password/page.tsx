@@ -45,6 +45,7 @@ const ForgotPasswordComponent = () => {
     },
   });
 
+
   const onSubmit = async (data: EmailVerificationData | VerificationCodeData | ForgotPasswordData) => {
     setSubmitting(true);
 
