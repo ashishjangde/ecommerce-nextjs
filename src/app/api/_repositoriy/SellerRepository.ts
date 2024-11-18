@@ -4,14 +4,14 @@ import { Seller, Prisma, RequestStatus } from "@prisma/client";
 
 export const SellerRepository = {
 
-  // Get Seller by ID with error handling
+
   getSellerById: async (id: string): Promise<Seller | null> => {
     return await handleDatabaseOperation(async () => {
       return await prisma.seller.findUnique({ where: { id } });
     });
   },
 
-  // Get Seller by Email with error handling
+
   getSellerByEmail: async (email: string): Promise<Seller | null> => {
     return await handleDatabaseOperation(async () => {
       return await prisma.seller.findUnique({ where: { email } });

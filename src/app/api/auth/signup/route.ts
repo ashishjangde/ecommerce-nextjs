@@ -5,17 +5,20 @@ import { ApiError } from "../../_utils/ApiError";
 import SignUpSchemaBackend from "@/schema/SignupSchemaBackend";
 import { formatValidationErrors } from "../../_utils/FormatValidationError";
 import { userRepository } from "../../_repositoriy/UserRepository";
+import { userRepositoryRedis } from "../../_redisRepository/UserRepositoryRedis";  // Redis Integration
 import { hashPassword } from "@/app/api/_helper/PasswordHelper";
 import { genrateVerificationCode, genrateVerificationCodeExpiry } from "../../_helper/VerificationCodeHelper";
 import { NextResponse } from "next/server";
+import { sendVerificationEmail } from "@/helpers/SendVerificationEmail";
 
+// Helper function to create or update the user
 async function createOrUpdateUser({ id, name, email, password }: { id?: string, name: string, email: string, password: string }) {
     const hashedPassword = await hashPassword(password);
     const verificationCode = genrateVerificationCode();
     const codeExpireAt = genrateVerificationCodeExpiry();
 
     if (id) {
-        return await userRepository.updateUser(id, {
+        const updatedUser = await userRepository.updateUser(id, {
             name,
             email,
             password: hashedPassword,
@@ -23,8 +26,13 @@ async function createOrUpdateUser({ id, name, email, password }: { id?: string, 
             codeExpireAt,
             isVerified: false,
         });
+
+        await userRepositoryRedis.saveUser(updatedUser.id, updatedUser);
+        await sendVerificationEmail(email , name, verificationCode);
+        return updatedUser;
     } else {
-        return await userRepository.createUser({
+
+        const newUser = await userRepository.createUser({
             name,
             email,
             password: hashedPassword,
@@ -33,8 +41,12 @@ async function createOrUpdateUser({ id, name, email, password }: { id?: string, 
             isVerified: false,
             roles: [UserRole.CUSTOMER],
         });
+        await userRepositoryRedis.saveUser(newUser.id, newUser);
+        await sendVerificationEmail(email , name, verificationCode);
+        return newUser;
     }
 }
+
 
 export const POST = asyncHandler(async (req) => {
     const body = await req.json();
@@ -44,13 +56,23 @@ export const POST = asyncHandler(async (req) => {
         const error = formatValidationErrors(result.error);
         throw new ApiError(400, "Validation error", error);
     }
-
     const { name, email, password } = result.data;
-    const existUser = await userRepository.getUserByEmail(email);
+
+    let existUser = await userRepositoryRedis.getUserByEmail(email);
+
+    if (!existUser) {
+      
+        existUser = await userRepository.getUserByEmail(email);
+        if (existUser) {
+          
+            await userRepositoryRedis.saveUser(existUser.id, existUser);
+        }
+    }
 
     let user;
     if (existUser) {
         if (existUser.isVerified === false) {
+         
             user = await createOrUpdateUser({
                 id: existUser.id,
                 name,
@@ -63,7 +85,6 @@ export const POST = asyncHandler(async (req) => {
             throw new ApiError(400, "User already exists and is verified");
         }
     } else {
-
         user = await createOrUpdateUser({ name, email, password });
         const { password: _, verificationCode: __, codeExpireAt: ___, ...rest } = user;
         return NextResponse.json(new ApiResponse(rest), { status: 201 });

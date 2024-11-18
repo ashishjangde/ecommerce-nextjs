@@ -8,6 +8,7 @@ const redisClient = CreateClient
           port: Number(process.env.REDIS_PORT),
         },
       })
-    .connect();
+
+await redisClient.connect();
 
 export default redisClient;

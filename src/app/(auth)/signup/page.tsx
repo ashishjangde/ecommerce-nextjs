@@ -128,7 +128,7 @@ export default function Page() {
               )}
             />
             <Button type='submit' className='w-full bg-blue-600 rounded-full px-4 py-2 text-white hover:bg-blue-700 transition'>
-            {submitting ? <Spinner color='white'/>  : 'Login'}
+            {submitting ? <Spinner color='white'/>  : 'Sign Up'}
             </Button>
           </form>
         </Form>
