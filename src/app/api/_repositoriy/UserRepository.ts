@@ -1,4 +1,4 @@
-import prisma from "@/db/connectDb";
+import prisma from "@/db/connectPrismaDb";
 import handleDatabaseOperation from "../_utils/handelDatabaseOperation";
 import { User } from "@prisma/client"
 
