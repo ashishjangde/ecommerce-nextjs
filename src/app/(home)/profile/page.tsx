@@ -18,6 +18,8 @@ import {
   Settings,
   Gift
 } from 'lucide-react';
+import Image from 'next/image';
+
 
 export default function ProfilePage() {
   return (
@@ -27,7 +29,9 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <img
+              <Image
+                width={150}
+                height={150}
                 src="/api/placeholder/150/150"
                 alt="Profile"
                 className="rounded-full w-24 h-24 object-cover border-4 border-white shadow-lg"

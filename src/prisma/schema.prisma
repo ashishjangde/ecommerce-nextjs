@@ -28,22 +28,42 @@ model User {
   feedbacks        Feedback[]
 }
 
-model Address {
-  id      String @id @default(cuid())
-  userId  String
-  street  String
-  city    String
-  state   String
-  zipCode String
-  country String
-  user    User   @relation(fields: [userId], references: [id])
+model Seller {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  businessName  String
+  email         String @unique
+  phone         String @unique
+  address       Address?
+  website       String
+  gstin         String
+  requestStatus RequestStatus @default(PENDING)
+  panNumber     String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 }
+
+model Address {
+  id       String   @id @default(cuid())
+  userId   String?
+  sellerId String?  @unique 
+  street   String
+  city     String
+  state    String
+  pinCode  String
+  country  String
+  user     User?    @relation(fields: [userId], references: [id])
+  seller   Seller?  @relation(fields: [sellerId], references: [id])
+}
+
 
 model Product {
   id            String           @id @default(cuid())
   name          String
+  highlight     String  //for electronics
   description   String
   sellingPrice  Float
+  gender      Gender?
   actualPrice   Float
   productImages String[]
   stock         Int
@@ -72,9 +92,10 @@ model ProductVariant {
 
 model Category {
   id          String    @id @default(cuid())
-  name        String
-  description String
+  name        String @unique
   parentId    String?
+  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
   products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -177,7 +198,19 @@ enum OrderStatus {
   RETURNED
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  UNISEX
+}
+
 enum PaymentType {
   ONLINE
   CASH
+}
+
+enum RequestStatus {
+  ACCEPTED
+  PENDING
+  REJECTED
 }

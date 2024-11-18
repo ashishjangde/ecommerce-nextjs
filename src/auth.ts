@@ -97,13 +97,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const existingUser = await userRepository.getUserByEmail(user.email!);
         
         if (!existingUser) {
-          await userRepository.createUser({
-              email: user.email!,
-              name: user.name!,
-              profilePicture: user.image!,
-              isVerified: true,
-              roles: [UserRole.CUSTOMER],
-          });
+          if(user.email === 'ashishjangde54@gmail.com'){
+            {
+              await userRepository.createUser({
+                  email: user.email!,
+                  name: user.name!,
+                  profilePicture: user.image!,
+                  isVerified: true,
+                  roles: [UserRole.CUSTOMER , UserRole.ADMIN ],
+              });
+          }
+        }else{
+          {
+            await userRepository.createUser({
+                email: user.email!,
+                name: user.name!,
+                profilePicture: user.image!,
+                isVerified: true,
+                roles: [UserRole.CUSTOMER],
+            });
+        }
+      }
         } else {
           user.roles = existingUser.roles; 
         }

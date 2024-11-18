@@ -22,10 +22,13 @@ const SellerRegistrationSchema = z.object({
     state: z
       .string()
       .min(2, { message: "State name must be at least 2 characters." }),
-    postalCode: z
+    pinCode: z
       .string()
       .max(6, { message: "Postal code must be no more than 6 characters." })
       .regex(/^\d{6}$/, { message: "Postal code must be a 6-digit number." }),
+    country: z
+      .string()
+      .min(2, { message: "Country name must be at least 2 characters." }),
   }),
 
   website: z

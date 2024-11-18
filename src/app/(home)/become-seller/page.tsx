@@ -28,7 +28,7 @@ import SellerRegistrationSchema from '@/schema/SellerRegistrationSchema';
 
 type FormData = z.infer<typeof SellerRegistrationSchema>;
 
-const page: React.FC = () => {
+export default function Page () {
   const [currentStep, setCurrentStep] = useState(1);
 
   const form = useForm<FormData>({
@@ -72,6 +72,7 @@ const page: React.FC = () => {
       // Show success message
     } catch (error) {
       // Handle error
+      console.error(error);
     }
   };
 
@@ -122,7 +123,6 @@ const page: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Right Section - Form */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -401,4 +401,3 @@ const page: React.FC = () => {
   );
 };
 
-export default page;

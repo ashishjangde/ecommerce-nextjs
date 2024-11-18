@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ApiResponse } from "./ApiResponse";
 import { ApiError } from "./ApiError";
 
-type AsyncHandler= (req: NextRequest) => Promise<NextResponse>;
+type AsyncHandler= (req: NextRequest) => Promise<NextResponse | void>;
 
 
 const asyncHandler = (fn: AsyncHandler): AsyncHandler => async (req) => {
@@ -12,8 +12,6 @@ const asyncHandler = (fn: AsyncHandler): AsyncHandler => async (req) => {
     if (error instanceof ApiError) {
       return NextResponse.json(new ApiResponse<null>(null, error), { status: error.statusCode });
     }
-
-    console.error("Unexpected error:", error);
     return NextResponse.json(
       new ApiResponse<null>(null, new ApiError(500, "Internal server error")),
       { status: 500 }

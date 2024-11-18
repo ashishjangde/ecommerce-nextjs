@@ -14,7 +14,7 @@ export const POST = asyncHandler(async (req) => {
         const error =  formatValidationErrors(result.error);
         throw new ApiError(400, "validation error", error );
     }
-    const { email , code } = result.data;
+    const { email , verificationCode } = result.data;
     const user = await userRepository.getUserByEmail(email);
     if(!user){
         throw new ApiError(400, "user not found");
@@ -22,7 +22,7 @@ export const POST = asyncHandler(async (req) => {
     if(user.isVerified){
         throw new ApiError(400, "user already verified");
     }
-    if(user.verificationCode !== code){
+    if(user.verificationCode !== verificationCode){
         throw new ApiError(400, "invalid code");
     }
     if(user.codeExpireAt! < new Date()){
