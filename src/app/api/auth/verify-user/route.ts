@@ -8,7 +8,7 @@ import EmailAndVerificationCodeSchema from "@/schema/EmailAndVerificationCodeSch
 import { NextResponse } from "next/server";
 
 export const POST = asyncHandler(async (req) => {
-  // Validate input data
+
   const result = EmailAndVerificationCodeSchema.safeParse(req.body);
   if (!result.success) {
     const error = formatValidationErrors(result.error);
@@ -17,13 +17,10 @@ export const POST = asyncHandler(async (req) => {
 
   const { email, verificationCode } = result.data;
 
-  // Check for user in Redis first
   let user = await userRepositoryRedis.getUserByEmail(email);
   
-  // If not found in Redis, fall back to the database
   if (!user) {
     user = await userRepository.getUserByEmail(email);
-    // Cache the user data in Redis for future requests
     if (user) {
       await userRepositoryRedis.saveUser(user.id, user);
     }
@@ -33,22 +30,18 @@ export const POST = asyncHandler(async (req) => {
     throw new ApiError(400, "user not found");
   }
 
-  // Check if the user is already verified
   if (user.isVerified) {
     throw new ApiError(400, "user already verified");
   }
 
-  // Check if the verification code matches
   if (user.verificationCode !== verificationCode) {
     throw new ApiError(400, "invalid code");
   }
 
-  // Check if the verification code has expired
   if (user.codeExpireAt! < new Date()) {
     throw new ApiError(400, "code expired");
   }
 
-  // Update user verification status in the database and Redis
   await userRepository.updateUser(user.id, {
     isVerified: true,
     verificationCode: null,

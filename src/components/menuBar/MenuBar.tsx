@@ -1,23 +1,13 @@
 'use client';
-import React, { useEffect } from 'react';
-import {
-  LayoutDashboard,
-  ShoppingBag,
-  Package,
-  List,
-  Grid,
-  Users,
-  Star,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { useMenuBar } from '@/context/MenuBarContext';
+import SelllerAdminNav from '../seller-admin-nav/SelllerAdminNav';
 
-interface MenuItems {
+export interface MenuItems {
   name: string;
   href: string;
   icon?: React.ReactNode;
@@ -64,61 +54,88 @@ const NavItem = ({
   </Link>
 );
 
-export default function MenuBar() {
+export default function MenuBar({ menuItems }: { menuItems: MenuItems[] }) {
   const pathname = usePathname();
-  const { isCollapsed, toggleCollapse } = useMenuBar(); // Use context instead of local state
-
-  const menuItems: MenuItems[] = [
-    { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard strokeWidth={1.5} /> },
-    { name: 'Orders', href: '/seller/orders', icon: <ShoppingBag strokeWidth={1.5} /> },
-    { name: 'Products', href: '/seller/products', icon: <Package strokeWidth={1.5} /> },
-    { name: 'List Product', href: '/seller/list-product', icon: <List strokeWidth={1.5} /> },
-    { name: 'Categories', href: '/seller/categories', icon: <Grid strokeWidth={1.5} /> },
-    { name: 'Customers', href: '/seller/customers', icon: <Users strokeWidth={1.5} /> },
-    { name: 'Reviews', href: '/seller/reviews', icon: <Star strokeWidth={1.5} /> },
-  ];
+  const { isCollapsed, toggleCollapse, isHidden, setIsHidden } = useMenuBar();
+  const sidebarRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    console.log('Navigated to:', pathname);
-  }, [pathname]);
+    const observer = new MutationObserver(() => {
+      if (sidebarRef.current) {
+        const isNowHidden =
+          getComputedStyle(sidebarRef.current).display === 'none';
+
+        setIsHidden(isNowHidden);
+
+  
+        if (isNowHidden && !isCollapsed) {
+          toggleCollapse();
+        }
+      }
+    });
+
+    if (sidebarRef.current) {
+      observer.observe(sidebarRef.current, {
+        attributes: true,
+        attributeFilter: ['style', 'class'], 
+      });
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [setIsHidden, isCollapsed, toggleCollapse]);
 
   return (
-    <aside
-      className={`h-screen flex flex-col fixed left-0 bg-white border-r border-gray-200
-        transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'w-16' : 'w-64'}
-      `}
-    >
-      <div className="flex items-center justify-between border-b border-gray-200 h-16 px-6">
-        {!isCollapsed && <h1 className="text-xl font-semibold text-gray-800">Seller</h1>}
-        <button
-          onClick={toggleCollapse} // Call toggleCollapse from context
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-          aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+    <>
+      <SelllerAdminNav />
+      {!isHidden && (
+        <aside
+          ref={sidebarRef}
+          className={`h-screen hidden md:flex flex-col fixed left-0 bg-white border-r border-gray-200 
+            transition-all duration-300 ease-in-out overflow-hidden ${
+              isCollapsed ? 'w-16' : 'w-64'
+            }`}
         >
-          {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-        </button>
-      </div>
+          <div className="flex items-center justify-between border-b border-gray-200 h-[70px] px-6">
+            {!isCollapsed && (
+              <h1 className="text-3xl font-semibold text-gray-800">Next Store</h1>
+            )}
+            <button
+              onClick={toggleCollapse}
+              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="w-5 h-5" />
+              ) : (
+                <ChevronLeft className="w-5 h-5" />
+              )}
+            </button>
+          </div>
 
-      <nav className="flex-1 py-4">
-        {menuItems.map((item, index) => (
-          <NavItem
-            key={index}
-            item={item}
-            isActive={pathname === item.href}
-            isCollapsed={isCollapsed}
-          />
-        ))}
-      </nav>
+          <nav className="flex-1 py-4">
+            {menuItems.map((item, index) => (
+              <NavItem
+                key={index}
+                item={item}
+                isActive={pathname === item.href}
+                isCollapsed={isCollapsed}
+              />
+            ))}
+          </nav>
 
-      <div className="border-t border-gray-200 p-4">
-        <button
-          onClick={() => signOut({ callbackUrl: '/' })}
-          className="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100"
-        >
-          <LogOut className="min-w-[20px] h-5" />
-          {!isCollapsed && <span className="ml-3 text-sm">Sign Out</span>}
-        </button>
-      </div>
-    </aside>
+          <div className="border-t border-gray-200 p-4">
+            <button
+              onClick={() => signOut({ callbackUrl: '/' })}
+              className="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100"
+            >
+              <LogOut className="min-w-[20px] h-5" />
+              {!isCollapsed && <span className="ml-3 text-sm">Sign Out</span>}
+            </button>
+          </div>
+        </aside>
+      )}
+    </>
   );
 }

@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useRef, useEffect} from 'react'
 import Link from 'next/link'
-import { AlignLeft, X, Search, Heart, ShoppingCart, Store, TrendingUp, FileText, User, LogOut, LogIn, MoveLeft } from 'lucide-react'
+import { AlignLeft, X, Search, Heart, ShoppingCart, Store, TrendingUp, FileText, User, LogOut, LogIn, MoveLeft, Users } from 'lucide-react'
 import { Input } from '../../ui/input'
 import { signOut, useSession } from 'next-auth/react'
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/dropdown"
@@ -39,6 +39,7 @@ export default function Navbar() {
     const { data: session, status } = useSession();
     const isLoggedIn =  status === "authenticated";
     const isSeller = session?.user?.roles?.includes(UserRole.SELLER);
+    const isAdmin = session?.user?.roles?.includes(UserRole.ADMIN);
    
     const baseItems: MenuItem[] = [
         {
@@ -241,6 +242,14 @@ export default function Navbar() {
                                 <span>Become Seller</span>
                             </Link>
                         ) : null}
+                        {
+                            isAdmin ? (
+                                <Link href="/admin/dashboard" className="flex gap-2 items-center hover:text-gray-600">
+                                    <Users strokeWidth={1} size={25} />
+                                    <p>Admin</p>
+                                </Link>
+                            ): null
+                        }
                         {isSeller ? (
                             <Link href="/dashboard" className="flex gap-2 items-center hover:text-gray-600">
                                 <TrendingUp strokeWidth={1} size={25} className='text-green-600' />
