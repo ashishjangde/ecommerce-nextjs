@@ -5,16 +5,15 @@ import { validateAdminSession } from "../../_utils/ValidateSession";
 import { SellerRepository } from "../../_repositoriy/SellerRepository";
 
 export const GET = asyncHandler(async (req) => {
-   validateAdminSession();
+    validateAdminSession();
 
    const { searchParams } = req.nextUrl;
    const page = searchParams.get('page') || '1';  
 
    const pageNumber = parseInt(page, 10);
-  
+
 
    const { sellers, totalPosts, totalPages } = await SellerRepository.getAllSellersWhereStatusPending(pageNumber , 10);
-
    const pagination = {
      currentPage: pageNumber,
      totalPages,
@@ -23,6 +22,7 @@ export const GET = asyncHandler(async (req) => {
      hasNextPage: pageNumber < totalPages,
      hasPreviousPage: pageNumber > 1,
    };
+   
 
    return NextResponse.json(new ApiResponse({
     sellers,

@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react'
-import SignUpSchema from '@/schema/SignupSchema'
+import SignUpSchema from '@/schema/auth/SignupSchema'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -40,18 +40,12 @@ export default function Page() {
     setSubmitting(true);
     
     try {
-      const response = await axios.post<ApiResponse<typeof SignUpSchema>>('/api/auth/signup', data);
-      
+      const response = await axios.post('/api/auth/signup', data);
       if (response.status === 201 && response.data) {
-        if (response.data.apiError) {
-          toast.error(response.data.apiError.message);
-        } else {
           toast.success('Account created successfully');
-          router.push('/login');
-        }
+          router.push(`/verify/${response.data.data.id}`);
       }
     } catch (error) {
-      console.error("An error occurred:", error);
       if (error instanceof AxiosError && error.response) {
         const apiError = error.response.data as ApiResponse<null>;
         toast.error(apiError.apiError?.message || "Something went wrong");

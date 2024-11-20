@@ -1,7 +1,7 @@
 import asyncHandler from "../../_utils/asyncHandler";
 import { ApiResponse } from "../../_utils/ApiResponse";
 import { ApiError } from "../../_utils/ApiError";
-import ForgotPasswordSchema from "@/schema/ForgotPasswordBackendSchema";
+import ForgotPasswordSchema from "@/schema/auth/ForgotPasswordBackendSchema";
 import { userRepository } from "../../_repositoriy/UserRepository"; // DB repository
 import userRepositoryRedis from "../../_redisRepository/UserRepositoryRedis";
 import { NextResponse } from "next/server";

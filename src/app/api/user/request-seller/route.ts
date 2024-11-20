@@ -7,7 +7,7 @@ import SellerRegistrationSchema from "@/schema/SellerRegistrationSchema";
 import { formatValidationErrors } from "../../_utils/FormatValidationError";
 import { SellerRepository } from "../../_repositoriy/SellerRepository";
 import { RequestStatus } from "@prisma/client";
-import SellerRepositoryRedis from "../../_redisRepository/SellerRepositoryRedis"; // Import Redis repository
+import SellerRepositoryRedis from "../../_redisRepository/SellerRepositoryRedis"; 
 
 export const POST = asyncHandler(async (req) => {
   const { user } = await validateUserSession();
@@ -20,12 +20,19 @@ export const POST = asyncHandler(async (req) => {
     throw new ApiError(400, "Validation error", errors);
   }
 
-  const existingRequest = await SellerRepositoryRedis.getSellerByUserId(user.id); 
+  let  existingRequest = await SellerRepositoryRedis.getSellerByUserId(user.id); 
+  if(!existingRequest){
+    existingRequest = await SellerRepository.getSellerByUserId(user.id)
+    if(existingRequest) {
+      await SellerRepositoryRedis.saveSeller(existingRequest?.id ,existingRequest);
+    }
+  }
+
   if (existingRequest) {
-    if (existingRequest.requestStatus === RequestStatus.PENDING) {
+    if (existingRequest.requestStatus === RequestStatus.Pending) {
       throw new ApiError(400, "Request already pending state");
     }
-    if (existingRequest.requestStatus === RequestStatus.ACCEPTED) {
+    if (existingRequest.requestStatus === RequestStatus.Accepted) {
       throw new ApiError(400, "Request already accepted state");
     }
   } else {
@@ -46,13 +53,15 @@ export const POST = asyncHandler(async (req) => {
       : undefined;
   
     const seller = await SellerRepository.createSeller({
-      userId: user.id,
+      user: {
+        connect: { id: user.id },
+      },
       businessName,
       email,
       phone,
       address: addressValue,
       gstin,
-      requestStatus: RequestStatus.PENDING,
+      requestStatus: RequestStatus.Pending,
       panNumber,
       website: websiteValue,
     });

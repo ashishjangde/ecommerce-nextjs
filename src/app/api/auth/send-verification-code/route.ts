@@ -5,7 +5,7 @@ import { formatValidationErrors } from "../../_utils/FormatValidationError";
 import { userRepository } from "../../_repositoriy/UserRepository"; 
 import userRepositoryRedis from "../../_redisRepository/UserRepositoryRedis";
 import { NextResponse } from "next/server";
-import EmailVerificationSchema from "@/schema/EmailVerifiactionSchema";
+import EmailVerificationSchema from "@/schema/auth/EmailVerifiactionSchema";
 import { genrateVerificationCode, genrateVerificationCodeExpiry } from "../../_helper/VerificationCodeHelper";
 import { sendVerificationEmail } from "@/helpers/SendVerificationEmail";
 

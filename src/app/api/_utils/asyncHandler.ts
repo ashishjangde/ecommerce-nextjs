@@ -9,7 +9,7 @@ const asyncHandler = (fn: AsyncHandler): AsyncHandler => async (req) => {
   try {
     return await fn(req);
   } catch (error) {
-    // console.error(error);
+    console.error(error);
     if (error instanceof ApiError) {
       return NextResponse.json(new ApiResponse<null>(null, error), { status: error.statusCode });
     }

@@ -4,23 +4,26 @@ import { ApiError } from "../../_utils/ApiError";
 import { formatValidationErrors } from "../../_utils/FormatValidationError";
 import { userRepository } from "../../_repositoriy/UserRepository"; 
 import { userRepositoryRedis } from "../../_redisRepository/UserRepositoryRedis"; 
-import EmailAndVerificationCodeSchema from "@/schema/EmailAndVerificationCodeSchema";
+import IdandVerificationCodeSchema from '@/schema/auth/IdAndVerificationCodeSchema';
 import { NextResponse } from "next/server";
 
 export const POST = asyncHandler(async (req) => {
 
-  const result = EmailAndVerificationCodeSchema.safeParse(req.body);
+  const body = await req.json();
+
+  const result = IdandVerificationCodeSchema.safeParse(body);
+  console.log(result);
   if (!result.success) {
     const error = formatValidationErrors(result.error);
     throw new ApiError(400, "validation error", error);
   }
 
-  const { email, verificationCode } = result.data;
+  const { id , verificationCode } = result.data;
 
-  let user = await userRepositoryRedis.getUserByEmail(email);
+  let user = await userRepositoryRedis.getUserById(id);
   
   if (!user) {
-    user = await userRepository.getUserByEmail(email);
+    user = await userRepository.getUserById(id);
     if (user) {
       await userRepositoryRedis.saveUser(user.id, user);
     }

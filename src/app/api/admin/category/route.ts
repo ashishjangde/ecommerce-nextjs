@@ -34,7 +34,6 @@ export const POST = asyncHandler(async (req) => {
     parent: parentId ? { connect: { id: parentId } } : undefined,
   });
 
-  // Save the new category to Redis cache
   await CategoryRepositoryRedis.saveCategory(newCategory.id, newCategory);
 
   return NextResponse.json(new ApiResponse(newCategory), { status: 201 });

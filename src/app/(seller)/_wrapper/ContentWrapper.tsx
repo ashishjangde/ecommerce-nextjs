@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 
 export default function ContentWrapper({ children }: { children: ReactNode }) {
   const { isCollapsed, isHidden } = useMenuBar(); // Destructure isHidden
+  console.log("is hidden is " + isHidden);
 
   return (
     <div

@@ -32,8 +32,7 @@ const SellerRegistrationSchema = z.object({
   }),
 
   website: z
-    .string()
-    .url({ message: "Please enter a valid URL." })
+    .union([z.string().url().min(1), z.literal('')])
     .optional(),
   gstin: z
     .string()

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { DollarSign, Percent, Infinity, ChevronRight, Building2, Mail, Phone, MapPin, Globe, FileText } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import {
   Card,
   CardContent,
@@ -23,28 +23,27 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { zodResolver } from '@hookform/resolvers/zod';
 import SellerRegistrationSchema from '@/schema/SellerRegistrationSchema';
+import toast from 'react-hot-toast';
+import { ApiResponse } from '@/app/api/_utils/ApiResponse';
 
 
 
-type FormData = z.infer<typeof SellerRegistrationSchema>;
 
 export default function Page () {
   const [currentStep, setCurrentStep] = useState(1);
 
-  const form = useForm<FormData>({
+  const form = useForm<z.infer<typeof SellerRegistrationSchema>>({
     resolver: zodResolver(SellerRegistrationSchema),
     defaultValues: {
       businessName: '',
       email: '',
       phone: '',
-      address: { street: '', city: '', state: '', postalCode: '' },
+      address: { street: '', city: '', state: '', pinCode : '', country: '' },
       website: '',
       gstin: '',
       panNumber: ''
     }
   });
-
-
 
   const handleNextStep = async () => {
     let isValid = false;
@@ -52,9 +51,9 @@ export default function Page () {
     if (currentStep === 1) {
       isValid = await form.trigger(['businessName', 'email', 'phone']);
     } else if (currentStep === 2) {
-      isValid = await form.trigger(['address.street', 'address.city', 'address.state', 'address.postalCode']);
+      isValid = await form.trigger(['address.street', 'address.city', 'address.state', 'address.pinCode', 'address.country']);
     } else {
-      isValid = await form.trigger(['website', 'gstin', 'panNumber']);
+      isValid = await form.trigger([ 'gstin', 'panNumber']);
     }
 
     if (isValid) {
@@ -66,13 +65,24 @@ export default function Page () {
     }
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: z.infer<typeof SellerRegistrationSchema>) => {
     try {
-      await axios.post('/api/seller/register', data);
-      // Show success message
+      const formData = {
+        ...data,
+        website: data.website || undefined
+      };
+     const response = await axios.post('/api/user/request-seller', formData);
+      if (response.status === 201 && response.data) {
+        toast.success('Account created successfully');
+    }
     } catch (error) {
-      // Handle error
-      console.error(error);
+      if (error instanceof AxiosError && error.response) {
+        const apiError = error.response.data as ApiResponse<null>;
+        toast.error(apiError.apiError?.message || "Something went wrong");
+      } else {
+        console.error("An unexpected error occurred:", error);
+        toast.error("An unexpected error occurred");
+      }
     }
   };
 
@@ -82,7 +92,6 @@ export default function Page () {
     <div className="min-h-screen bg-gradient-to-br mt-20 from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left Section */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -281,13 +290,13 @@ export default function Page () {
                               )}
                             />
                           </div>
-
+                          <div className="grid grid-cols-2 gap-4">
                           <FormField
                             control={form.control}
-                            name="address.postalCode"
+                            name="address.pinCode"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-gray-700">Postal Code</FormLabel>
+                                <FormLabel className="text-gray-700">Pin Code</FormLabel>
                                 <FormControl>
                                   <Input
                                     {...field}
@@ -299,6 +308,24 @@ export default function Page () {
                               </FormItem>
                             )}
                           />
+                          <FormField
+                            control={form.control}
+                            name="address.country"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-gray-700">Country</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    className="h-12 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Country"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem> 
+                            )}
+                          />
+                         </div>
                         </div>
                       )}
 

@@ -26,6 +26,8 @@ model User {
   paymentMethods   PaymentMethod[]
   wishlists        Wishlist[]
   feedbacks        Feedback[]
+
+  Seller Seller[]
 }
 
 model Seller {
@@ -37,10 +39,11 @@ model Seller {
   address       Address?
   website       String
   gstin         String
-  requestStatus RequestStatus @default(PENDING)
+  requestStatus RequestStatus   @default(Pending)
   panNumber     String
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  user          User @relation(fields: [userId], references: [id])
 }
 
 model Address {
@@ -59,17 +62,21 @@ model Address {
 
 model Product {
   id            String           @id @default(cuid())
+  brandName     String
   name          String
-  highlight     String  //for electronics
+  slug          String           @unique
   description   String
   sellingPrice  Float
-  gender      Gender?
   actualPrice   Float
+  discount      Int 
+  gender        Gender?
   productImages String[]
   stock         Int
+  ratings       Float
   tags          String[]
-  sellerId      String @unique
+  sellerId      String
   categoryId    String
+  attributes    Json? 
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   seller        User             @relation("SellerProducts", fields: [sellerId], references: [id])
@@ -82,13 +89,18 @@ model Product {
 }
 
 model ProductVariant {
-  id           String  @id @default(cuid())
-  productId    String
+  id           String   @id @default(cuid())
+  productId    String   
+  name         String   
+  slug         String   @unique
   variantType  String
-  attributes   Json
+  attributes   Json? 
   stock        Int
   sellingPrice Float
-  product      Product @relation(fields: [productId], references: [id])
+  actualPrice  Float
+  discount      Int 
+  images       String[]
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Category {
@@ -112,12 +124,13 @@ model Cart {
 }
 
 model CartItem {
-  id        String  @id @default(cuid())
+  id        String       @id @default(cuid())
   cartId    String
   productId String
   quantity  Int
-  product   Product @relation(fields: [productId], references: [id])
-  cart      Cart    @relation(fields: [cartId], references: [id])
+  type      ProductItemType 
+  product   Product      @relation(fields: [productId], references: [id])
+  cart      Cart         @relation(fields: [cartId], references: [id])
 }
 
 model Wishlist {
@@ -132,6 +145,7 @@ model Wishlist {
 model WishlistItem {
   id         String   @id @default(cuid())
   wishlistId String
+  type      ProductItemType 
   productId  String
   wishlist   Wishlist @relation(fields: [wishlistId], references: [id])
   product    Product  @relation(fields: [productId], references: [id])
@@ -154,6 +168,7 @@ model Order {
 model OrderItem {
   id        String  @id @default(cuid())
   orderId   String
+  type      ProductItemType 
   productId String
   quantity  Int
   price     Float
@@ -192,26 +207,31 @@ enum UserRole {
 }
 
 enum OrderStatus {
-  PENDING
-  SHIPPED
-  DELIVERED
-  CANCELED
-  RETURNED
+  Pending
+  Shipped
+  Delivered
+  Canceled
+  Returned
 }
 
 enum Gender {
-  MALE
-  FEMALE
-  UNISEX
+  Male
+  Female
+  Unisex
 }
 
 enum PaymentType {
-  ONLINE
-  CASH
+  Online
+  Cash
 }
 
 enum RequestStatus {
-  ACCEPTED
-  PENDING
-  REJECTED
+  Accepted
+  Pending
+  Rejected
+}
+
+enum ProductItemType {
+  Product
+  Variant
 }

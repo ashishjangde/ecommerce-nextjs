@@ -2,10 +2,19 @@
 CREATE TYPE "UserRole" AS ENUM ('CUSTOMER', 'ADMIN', 'SELLER');
 
 -- CreateEnum
-CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'SHIPPED', 'DELIVERED', 'CANCELED', 'RETURNED');
+CREATE TYPE "OrderStatus" AS ENUM ('Pending', 'Shipped', 'Delivered', 'Canceled', 'Returned');
 
 -- CreateEnum
-CREATE TYPE "PaymentType" AS ENUM ('ONLINE', 'CASH');
+CREATE TYPE "Gender" AS ENUM ('Male', 'Female', 'Unisex');
+
+-- CreateEnum
+CREATE TYPE "PaymentType" AS ENUM ('Online', 'Cash');
+
+-- CreateEnum
+CREATE TYPE "RequestStatus" AS ENUM ('Accepted', 'Pending', 'Rejected');
+
+-- CreateEnum
+CREATE TYPE "ProductItemType" AS ENUM ('Product', 'Variant');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -25,13 +34,31 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
-CREATE TABLE "Address" (
+CREATE TABLE "Seller" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "businessName" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "website" TEXT NOT NULL,
+    "gstin" TEXT NOT NULL,
+    "requestStatus" "RequestStatus" NOT NULL DEFAULT 'Pending',
+    "panNumber" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Seller_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Address" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT,
+    "sellerId" TEXT,
     "street" TEXT NOT NULL,
     "city" TEXT NOT NULL,
     "state" TEXT NOT NULL,
-    "zipCode" TEXT NOT NULL,
+    "pinCode" TEXT NOT NULL,
     "country" TEXT NOT NULL,
 
     CONSTRAINT "Address_pkey" PRIMARY KEY ("id")
@@ -40,14 +67,21 @@ CREATE TABLE "Address" (
 -- CreateTable
 CREATE TABLE "Product" (
     "id" TEXT NOT NULL,
+    "brandName" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "sellingPrice" DOUBLE PRECISION NOT NULL,
     "actualPrice" DOUBLE PRECISION NOT NULL,
+    "discount" INTEGER NOT NULL,
+    "gender" "Gender",
     "productImages" TEXT[],
     "stock" INTEGER NOT NULL,
+    "ratings" DOUBLE PRECISION NOT NULL,
+    "tags" TEXT[],
     "sellerId" TEXT NOT NULL,
     "categoryId" TEXT NOT NULL,
+    "attributes" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -58,10 +92,15 @@ CREATE TABLE "Product" (
 CREATE TABLE "ProductVariant" (
     "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
     "variantType" TEXT NOT NULL,
-    "attributes" JSONB NOT NULL,
+    "attributes" JSONB,
     "stock" INTEGER NOT NULL,
     "sellingPrice" DOUBLE PRECISION NOT NULL,
+    "actualPrice" DOUBLE PRECISION NOT NULL,
+    "discount" INTEGER NOT NULL,
+    "images" TEXT[],
 
     CONSTRAINT "ProductVariant_pkey" PRIMARY KEY ("id")
 );
@@ -70,7 +109,6 @@ CREATE TABLE "ProductVariant" (
 CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
     "parentId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -94,6 +132,7 @@ CREATE TABLE "CartItem" (
     "cartId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "quantity" INTEGER NOT NULL,
+    "type" "ProductItemType" NOT NULL,
 
     CONSTRAINT "CartItem_pkey" PRIMARY KEY ("id")
 );
@@ -112,6 +151,7 @@ CREATE TABLE "Wishlist" (
 CREATE TABLE "WishlistItem" (
     "id" TEXT NOT NULL,
     "wishlistId" TEXT NOT NULL,
+    "type" "ProductItemType" NOT NULL,
     "productId" TEXT NOT NULL,
 
     CONSTRAINT "WishlistItem_pkey" PRIMARY KEY ("id")
@@ -135,6 +175,7 @@ CREATE TABLE "Order" (
 CREATE TABLE "OrderItem" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
+    "type" "ProductItemType" NOT NULL,
     "productId" TEXT NOT NULL,
     "quantity" INTEGER NOT NULL,
     "price" DOUBLE PRECISION NOT NULL,
@@ -172,13 +213,37 @@ CREATE TABLE "Feedback" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Seller_userId_key" ON "Seller"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Seller_email_key" ON "Seller"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Seller_phone_key" ON "Seller"("phone");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Address_sellerId_key" ON "Address"("sellerId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Product_slug_key" ON "Product"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ProductVariant_slug_key" ON "ProductVariant"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Cart_customerId_key" ON "Cart"("customerId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Wishlist_customerId_key" ON "Wishlist"("customerId");
 
 -- AddForeignKey
-ALTER TABLE "Address" ADD CONSTRAINT "Address_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Address" ADD CONSTRAINT "Address_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Address" ADD CONSTRAINT "Address_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "Seller"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -187,7 +252,10 @@ ALTER TABLE "Product" ADD CONSTRAINT "Product_sellerId_fkey" FOREIGN KEY ("selle
 ALTER TABLE "Product" ADD CONSTRAINT "Product_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductVariant" ADD CONSTRAINT "ProductVariant_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductVariant" ADD CONSTRAINT "ProductVariant_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Category" ADD CONSTRAINT "Category_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Cart" ADD CONSTRAINT "Cart_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

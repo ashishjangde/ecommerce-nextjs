@@ -4,7 +4,7 @@ import { ApiError } from "../../_utils/ApiError";
 import { formatValidationErrors } from "../../_utils/FormatValidationError";
 import { userRepository } from "../../_repositoriy/UserRepository"; 
 import { userRepositoryRedis } from "../../_redisRepository/UserRepositoryRedis"; 
-import EmailAndVerificationCodeSchema from "@/schema/EmailAndVerificationCodeSchema";
+import EmailAndVerificationCodeSchema from "@/schema/auth/IdAndVerificationCodeSchema";
 import { NextResponse } from "next/server";
 
 export const POST = asyncHandler(async (req) => {

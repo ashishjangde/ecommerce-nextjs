@@ -40,20 +40,35 @@ export const SellerRepository = {
   getAllSellersWhereStatusPending: async (page: number, limit: number) => {
     return await handleDatabaseOperation(async () => {
       const sellers = await prisma.seller.findMany({
-        where: { requestStatus: RequestStatus.PENDING },
-        skip: (page - 1) * limit, 
-        take: limit, 
+        where: { requestStatus: RequestStatus.Pending },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              profilePicture: true,
+              roles: true,
+              isVerified: true,
+              createdAt: true,
+              updatedAt: true
+            }
+          }
+        },
       });
-
+  
       const totalPosts = await prisma.seller.count({
-        where: { requestStatus: RequestStatus.PENDING },
+        where: { requestStatus: RequestStatus.Pending },
       });
-
+  
       const totalPages = Math.ceil(totalPosts / limit);
-
+  
       return { sellers, totalPosts, totalPages };
     });
   },
+  
 
 
   deleteSeller: async (id: string): Promise<Seller> => {

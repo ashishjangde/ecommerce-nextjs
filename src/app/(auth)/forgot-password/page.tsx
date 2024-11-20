@@ -1,8 +1,8 @@
 'use client';
 import React, { useState } from 'react';
-import ForgotPasswordSchema from '@/schema/ForgotPasswordSchema';
-import EmailVerificationSchema from '@/schema/EmailVerifiactionSchema';
-import VeriificationCodeSchema from '@/schema/VeriificationCodeSchema';
+import ForgotPasswordSchema from '@/schema/auth/ForgotPasswordSchema';
+import EmailVerificationSchema from '@/schema/auth/EmailVerifiactionSchema';
+import VeriificationCodeSchema from '@/schema/auth/VeriificationCodeSchema';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@nextui-org/button';
