@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { zodResolver } from '@hookform/resolvers/zod';
 import SellerRegistrationSchema from '@/schema/SellerRegistrationSchema';
-import toast from 'react-hot-toast';
+import { useToast } from '@/hooks/use-toast';
 import { ApiResponse } from '@/app/api/_utils/ApiResponse';
 
 
@@ -31,6 +31,7 @@ import { ApiResponse } from '@/app/api/_utils/ApiResponse';
 
 export default function Page () {
   const [currentStep, setCurrentStep] = useState(1);
+  const toast = useToast();
 
   const form = useForm<z.infer<typeof SellerRegistrationSchema>>({
     resolver: zodResolver(SellerRegistrationSchema),
@@ -73,15 +74,30 @@ export default function Page () {
       };
      const response = await axios.post('/api/user/request-seller', formData);
       if (response.status === 201 && response.data) {
-        toast.success('Account created successfully');
+        toast.toast({
+          title: "Success",
+          description: "Your request has been submitted successfully. Please wait for approval.",
+          variant: "default",
+          duration: 5000
+        })
     }
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
         const apiError = error.response.data as ApiResponse<null>;
-        toast.error(apiError.apiError?.message || "Something went wrong");
+        toast.toast({
+          title: "Error",
+          description: apiError.apiError?.message || "Something went wrong",
+          variant: "destructive",
+          duration: 5000
+        })
       } else {
         console.error("An unexpected error occurred:", error);
-        toast.error("An unexpected error occurred");
+        toast.toast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+          duration: 5000
+        })
       }
     }
   };

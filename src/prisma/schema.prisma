@@ -31,34 +31,33 @@ model User {
 }
 
 model Seller {
-  id            String   @id @default(cuid())
-  userId        String   @unique
+  id            String        @id @default(cuid())
+  userId        String        @unique
   businessName  String
-  email         String @unique
-  phone         String @unique
+  email         String        @unique
+  phone         String        @unique
   address       Address?
   website       String
   gstin         String
-  requestStatus RequestStatus   @default(Pending)
+  requestStatus RequestStatus @default(Pending)
   panNumber     String
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  user          User @relation(fields: [userId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation(fields: [userId], references: [id])
 }
 
 model Address {
-  id       String   @id @default(cuid())
+  id       String  @id @default(cuid())
   userId   String?
-  sellerId String?  @unique 
+  sellerId String? @unique
   street   String
   city     String
   state    String
   pinCode  String
   country  String
-  user     User?    @relation(fields: [userId], references: [id])
-  seller   Seller?  @relation(fields: [sellerId], references: [id])
+  user     User?   @relation(fields: [userId], references: [id])
+  seller   Seller? @relation(fields: [sellerId], references: [id])
 }
-
 
 model Product {
   id            String           @id @default(cuid())
@@ -68,7 +67,7 @@ model Product {
   description   String
   sellingPrice  Float
   actualPrice   Float
-  discount      Int 
+  discount      Int
   gender        Gender?
   productImages String[]
   stock         Int
@@ -76,7 +75,7 @@ model Product {
   tags          String[]
   sellerId      String
   categoryId    String
-  attributes    Json? 
+  attributes    Json?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   seller        User             @relation("SellerProducts", fields: [sellerId], references: [id])
@@ -90,28 +89,28 @@ model Product {
 
 model ProductVariant {
   id           String   @id @default(cuid())
-  productId    String   
-  name         String   
+  productId    String
+  name         String
   slug         String   @unique
   variantType  String
-  attributes   Json? 
+  attributes   Json?
   stock        Int
   sellingPrice Float
   actualPrice  Float
-  discount      Int 
+  discount     Int
   images       String[]
   product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Category {
-  id          String    @id @default(cuid())
-  name        String @unique
-  parentId    String?
-  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  id        String     @id @default(cuid())
+  name      String     @unique
+  parentId  String?
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children  Category[] @relation("CategoryHierarchy")
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  products  Product[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Cart {
@@ -124,13 +123,13 @@ model Cart {
 }
 
 model CartItem {
-  id        String       @id @default(cuid())
+  id        String          @id @default(cuid())
   cartId    String
   productId String
   quantity  Int
-  type      ProductItemType 
-  product   Product      @relation(fields: [productId], references: [id])
-  cart      Cart         @relation(fields: [cartId], references: [id])
+  type      ProductItemType
+  product   Product         @relation(fields: [productId], references: [id])
+  cart      Cart            @relation(fields: [cartId], references: [id])
 }
 
 model Wishlist {
@@ -143,12 +142,12 @@ model Wishlist {
 }
 
 model WishlistItem {
-  id         String   @id @default(cuid())
+  id         String          @id @default(cuid())
   wishlistId String
-  type      ProductItemType 
+  type       ProductItemType
   productId  String
-  wishlist   Wishlist @relation(fields: [wishlistId], references: [id])
-  product    Product  @relation(fields: [productId], references: [id])
+  wishlist   Wishlist        @relation(fields: [wishlistId], references: [id])
+  product    Product         @relation(fields: [productId], references: [id])
 }
 
 model Order {
@@ -166,14 +165,14 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
+  id        String          @id @default(cuid())
   orderId   String
-  type      ProductItemType 
+  type      ProductItemType
   productId String
   quantity  Int
   price     Float
-  product   Product @relation(fields: [productId], references: [id])
-  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product         @relation(fields: [productId], references: [id])
+  order     Order           @relation(fields: [orderId], references: [id])
 }
 
 model PaymentMethod {

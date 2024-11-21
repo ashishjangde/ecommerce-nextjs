@@ -27,9 +27,13 @@ export const SellerRepository = {
 
   createSeller: async (userData: Prisma.SellerCreateInput): Promise<Seller> => {
     return await handleDatabaseOperation(async () => {
-      return await prisma.seller.create({ data: userData });
+      return await prisma.seller.create({
+        data: userData, 
+      });
     });
   },
+  
+  
 
   updateSeller: async (id: string, sellerData: Partial<Prisma.SellerUpdateInput>): Promise<Seller> => {
     return await handleDatabaseOperation(async () => {
@@ -37,10 +41,9 @@ export const SellerRepository = {
     });
   },
 
-  getAllSellersWhereStatusPending: async (page: number, limit: number) => {
+  getAllSellers: async (page: number, limit: number) => {
     return await handleDatabaseOperation(async () => {
       const sellers = await prisma.seller.findMany({
-        where: { requestStatus: RequestStatus.Pending },
         skip: (page - 1) * limit,
         take: limit,
         include: {

@@ -8,6 +8,7 @@ import { formatValidationErrors } from "../../_utils/FormatValidationError";
 import { SellerRepository } from "../../_repositoriy/SellerRepository";
 import { RequestStatus } from "@prisma/client";
 import SellerRepositoryRedis from "../../_redisRepository/SellerRepositoryRedis"; 
+import { userRepository } from "../../_repositoriy/UserRepository";
 
 export const POST = asyncHandler(async (req) => {
   const { user } = await validateUserSession();
@@ -19,7 +20,11 @@ export const POST = asyncHandler(async (req) => {
     const errors = formatValidationErrors(result.error);
     throw new ApiError(400, "Validation error", errors);
   }
-
+  console.log(user.id);
+   const existinguser = await userRepository.getUserById(user.id);
+   if(!existinguser){
+    throw new ApiError(400, "User not found");
+   }
   let  existingRequest = await SellerRepositoryRedis.getSellerByUserId(user.id); 
   if(!existingRequest){
     existingRequest = await SellerRepository.getSellerByUserId(user.id)

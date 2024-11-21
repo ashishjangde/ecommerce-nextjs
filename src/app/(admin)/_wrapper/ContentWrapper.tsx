@@ -1,6 +1,6 @@
 import { useMenuBar } from "@/context/MenuBarContext";
 import { ReactNode } from "react";
-
+import { UIStateProvider } from "@/context/UIStateContext";
 export default function ContentWrapper({ children }: { children: ReactNode }) {
   const { isCollapsed, isHidden } = useMenuBar(); 
 
@@ -14,7 +14,10 @@ export default function ContentWrapper({ children }: { children: ReactNode }) {
           : 'ml-[275px]' 
       }`}
     >
+    <UIStateProvider>
       {children}
+    </UIStateProvider>
+
     </div>
   );
 }

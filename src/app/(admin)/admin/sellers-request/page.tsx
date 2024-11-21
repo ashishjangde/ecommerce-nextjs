@@ -2,29 +2,19 @@
 
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
-import { RequestStatus, Seller, User } from '@prisma/client';
-import axios from 'axios';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { RequestStatus } from '@prisma/client';
+import axios, { AxiosError } from 'axios';
+import { Card,  CardContent} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { 
   Building2, 
-  CheckCircle2, 
   XCircle, 
-  Clock, 
-  Mail, 
-  Phone, 
-  Globe, 
-  FileText,
-  Calendar,
-  Filter,
   Search,
-  SortDesc
+  SortDesc,
+  Filter,
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -33,39 +23,27 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useForm } from 'react-hook-form';
+import { motion } from 'framer-motion';
+import React from 'react';
+import { useToast } from '@/hooks/use-toast';
+import  {SellerDialog}  from '@/components/sellet/seller-dialog/SellerDialog';
+import { Pagination , ApiResponse , ISeller } from '@/types/seller/seller';
+import AccessDenied from '@/components/ui-error/AccessDenied/AccessDenied';
+import LoadingSpinner from '@/components/ui-error/loading-spinner/LoadingSprinner';
+import ErrorDisplay from '@/components/ui-error/error-display/ErrorDisplay';
+import SellerTabs from '@/components/sellet/seller-tabs/SellerTabs';
+import { useUIState } from '@/context/UIStateContext';
 
-export interface Pagination {
-  currentPage: number;
-  totalPages: number;
-  totalPosts: number;
-  postsPerPage: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-}
-
-interface ISeller extends Seller {
-  user: User;
-}
-
-export interface ApiResponse {
-  localDateTime: string;
-  data: {
-    sellers: ISeller[];
-    pagination: Pagination;
-  };
-  apiError: string | null;
-}
 
 export default function AdvancedSellerRequestsPage() {
   const { data: session } = useSession();
   const [sellers, setSellers] = useState<ISeller[]>([]);
   const [filteredSellers, setFilteredSellers] = useState<ISeller[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState<'newest' | 'oldest' | 'name'>('newest');
   const [selectedSeller, setSelectedSeller] = useState<ISeller | null>(null);
+  const {loading , error , setLoading , setError } = useUIState();
   const [pagination, setPagination] = useState<Pagination>({
     currentPage: 1,
     totalPages: 1,
@@ -74,12 +52,12 @@ export default function AdvancedSellerRequestsPage() {
     hasNextPage: false,
     hasPreviousPage: false,
   });
-
+  const toast = useToast();
   const fetchSellers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get<ApiResponse>('/api/admin/get-seller-request');
+      const response = await axios.get<ApiResponse>('/api/admin/seller-request');
       const { sellers, pagination } = response.data.data;
 
       if (Array.isArray(sellers)) {
@@ -92,7 +70,6 @@ export default function AdvancedSellerRequestsPage() {
         setFilteredSellers([]);
       }
     } catch (error) {
-      console.error('Failed to fetch sellers:', error);
       setError('Failed to fetch seller data');
       setSellers([]);
       setFilteredSellers([]);
@@ -100,10 +77,51 @@ export default function AdvancedSellerRequestsPage() {
       setLoading(false);
     }
   }, []);
+  const tabs = [
+    {
+      value: 'all',
+      label: 'All Requests',
+      count: filteredSellers.length,
+      icon: Filter,
+    },
+    {
+      value: 'Pending',
+      label: 'Pending',
+      count: filteredSellers.filter(s => s.requestStatus === 'Pending').length,
+      icon: Clock,
+    },
+    {
+      value: 'Accepted',
+      label: 'Accepted',
+      count: filteredSellers.filter(s => s.requestStatus === 'Accepted').length,
+      icon: CheckCircle2,
+    },
+    {
+      value: 'Rejected',
+      label: 'Rejected',
+      count: filteredSellers.filter(s => s.requestStatus === 'Rejected').length,
+      icon: XCircle,
+    }
+  ];
 
   useEffect(() => {
     fetchSellers();
   }, [fetchSellers]);
+
+  const form = useForm<{ status: RequestStatus }>({
+    defaultValues: {
+      status: selectedSeller?.requestStatus || 'Pending'
+    }
+  });
+  
+  const onSubmit = async (data: { status: RequestStatus }) => {
+    try {
+      await handleStatusUpdate(selectedSeller!.id, data.status);
+      setSelectedSeller(null); 
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
+  };
 
 
   useEffect(() => {
@@ -118,7 +136,6 @@ export default function AdvancedSellerRequestsPage() {
       );
     }
 
-    // Sorting
     result.sort((a, b) => {
       switch (sortOption) {
         case 'newest':
@@ -137,268 +154,155 @@ export default function AdvancedSellerRequestsPage() {
 
   const handleStatusUpdate = async (sellerId: string, status: RequestStatus) => {
     try {
-      await axios.patch(`/api/admin/update-seller-status`, {
+     const request =  await axios.patch(`/api/admin/seller-request`, {
         sellerId,
         status
       });
-      fetchSellers();
+      if (request.status === 200) {
+        toast.toast({
+          title: 'Status changed',
+          description: 'The status has been updated successfully',
+          variant: 'default',
+        });
+        sellers.map((seller) => {
+          if (seller.id === sellerId) {
+            seller.requestStatus = status;
+          }
+        })
+      }
     } catch (error) {
-      console.error('Failed to update status:', error);
-      setError('Failed to update seller status');
+      if (error instanceof AxiosError && error.response) {
+        const apiError = error.response.data ;
+        toast.toast({
+          title: 'Error',
+          description: apiError.apiError?.message || 'Something went wrong',
+          variant: 'destructive',
+        });
+      } else {
+        toast.toast({
+          title: 'Error',
+          description: 'An unexpected error occurred',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
-  // Access denied or loading states remain the same...
+
   if (!session?.user.roles.includes("ADMIN")) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <Card className="w-96 shadow-xl">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <XCircle className="mx-auto h-12 w-12 text-red-500" />
-              <h3 className="mt-2 text-lg font-semibold">Access Denied</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                You do not have permission to view this page.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+     <AccessDenied />
     );
   }
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500" />
-      </div>
+     <LoadingSpinner />
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <Card className="w-96 shadow-xl">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <XCircle className="mx-auto h-12 w-12 text-red-500" />
-              <h3 className="mt-2 text-lg font-semibold">Error</h3>
-              <p className="mt-1 text-sm text-gray-500">{error}</p>
-              <Button 
-                onClick={() => fetchSellers()} 
-                className="mt-4 bg-blue-600 hover:bg-blue-700"
-              >
-                Try Again
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+     <ErrorDisplay onRetry={fetchSellers} />
     );
   }
 
   return (
     <div className="container mx-auto py-8 bg-gray-50 min-h-screen">
-      <Card className="mb-8 shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold flex items-center gap-4 text-blue-800">
-            <Building2 className="h-8 w-8" />
-            Seller Requests Management
-          </CardTitle>
-          <CardDescription className="text-gray-600">
-            Comprehensive dashboard for reviewing and managing seller registrations
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-4 mb-4">
-            {/* Search Input */}
-            <div className="relative flex-grow">
-              <Input 
-                placeholder="Search sellers..." 
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-
-            {/* Sorting Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <SortDesc className="h-4 w-4" />
-                  Sort: {sortOption}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Sort By</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setSortOption('newest')}>
-                  Newest First
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption('oldest')}>
-                  Oldest First
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption('name')}>
-                  Business Name
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="mb-4 bg-white shadow-md">
-          <TabsTrigger value="all">
-            All Requests ({filteredSellers.length})
-          </TabsTrigger>
-          <TabsTrigger value="Pending">
-            Pending ({filteredSellers.filter(s => s.requestStatus === 'Pending').length})
-          </TabsTrigger>
-          <TabsTrigger value="Accepted">
-            Accepted ({filteredSellers.filter(s => s.requestStatus === 'Accepted').length})
-          </TabsTrigger>
-          <TabsTrigger value="Rejected">
-            Rejected ({filteredSellers.filter(s => s.requestStatus === 'Rejected').length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all">
-          <SellerList 
-            sellers={filteredSellers} 
-            onStatusUpdate={handleStatusUpdate} 
-            onViewDetails={setSelectedSeller}
+      <Card className="bg-white border-none rounded-2xl  overflow-hidden">
+  <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6">
+    <div className="flex items-center justify-between">
+      <motion.div 
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="flex items-center space-x-4"
+      >
+        <div className="bg-white/20 rounded-full p-3">
+          <Building2 className="h-8 w-8 text-white" />
+        </div>
+        <div>
+          <h2 className="text-3xl font-bold text-white tracking-tight">
+            Seller Requests
+          </h2>
+          <p className="text-white/80 text-sm mt-1">
+            Comprehensive dashboard for managing seller registrations
+          </p>
+        </div>
+      </motion.div>
+      
+      <motion.div 
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="flex items-center space-x-4"
+      >
+        <div className="relative flex-grow">
+          <input 
+            type="text" 
+            placeholder="Search sellers..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="
+              w-64 pl-10 pr-4 py-2.5 
+              bg-white/10 border border-white/20 
+              rounded-xl text-white 
+              placeholder-white/50 
+              focus:outline-none 
+              focus:ring-2 focus:ring-white/30
+            "
           />
-        </TabsContent>
-        <TabsContent value="Pending">
-          <SellerList 
-            sellers={filteredSellers.filter(s => s.requestStatus === 'Pending')} 
-            onStatusUpdate={handleStatusUpdate} 
-            onViewDetails={setSelectedSeller}
-          />
-        </TabsContent>
-        <TabsContent value="Accepted">
-          <SellerList 
-            sellers={filteredSellers.filter(s => s.requestStatus === 'Accepted')} 
-            onStatusUpdate={handleStatusUpdate} 
-            onViewDetails={setSelectedSeller}
-          />
-        </TabsContent>
-        <TabsContent value="Rejected">
-          <SellerList 
-            sellers={filteredSellers.filter(s => s.requestStatus === 'Rejected')} 
-            onStatusUpdate={handleStatusUpdate} 
-            onViewDetails={setSelectedSeller}
-          />
-        </TabsContent>
-      </Tabs>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70" />
+        </div>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="
+                bg-white/10 border-white/20 
+                text-white hover:bg-white/20 
+                flex items-center gap-2
+              "
+            >
+              <SortDesc className="h-4 w-4" />
+              Sort: {sortOption}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-white shadow-2xl rounded-xl border-none">
+            <DropdownMenuLabel className="text-gray-500">Sort By</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {[
+              { value: 'newest', label: 'Newest First' },
+              { value: 'oldest', label: 'Oldest First' },
+              { value: 'name', label: 'Business Name' }
+            ].map((option) => (
+              <DropdownMenuItem 
+                key={option.value}
+                onClick={() => setSortOption(option.value as 'newest' | 'oldest' | 'name')}
+                className="hover:bg-gray-100 cursor-pointer"
+              >
+                {option.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </motion.div>
+    </div>
+  </div>
+</Card>
 
-      {/* Seller Details Dialog */}
+     <SellerTabs tabs={tabs} handleStatusUpdate={handleStatusUpdate} sellers={sellers} setSelectedSeller={setSelectedSeller}/>
+   
       {selectedSeller && (
-        <Dialog open={!!selectedSeller} onOpenChange={() => setSelectedSeller(null)}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle className="text-2xl">{selectedSeller.businessName}</DialogTitle>
-              <DialogDescription>
-                Detailed information about the seller request
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-semibold mb-2">Business Details</h4>
-                <p><Mail className="inline mr-2 h-4 w-4 text-gray-500" />{selectedSeller.email}</p>
-                <p><Phone className="inline mr-2 h-4 w-4 text-gray-500" />{selectedSeller.phone}</p>
-                <p><Globe className="inline mr-2 h-4 w-4 text-gray-500" />{selectedSeller.website || 'N/A'}</p>
-                <p><FileText className="inline mr-2 h-4 w-4 text-gray-500" />GSTIN: {selectedSeller.gstin}</p>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">Personal Information</h4>
-                <p>Name: {selectedSeller.user.name}</p>
-                <p>Registered: {new Date(selectedSeller.createdAt).toLocaleDateString()}</p>
-                <div className="mt-2">
-                  <Badge 
-                    className={`
-                      ${selectedSeller.requestStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
-                        selectedSeller.requestStatus === 'Accepted' ? 'bg-green-100 text-green-800' : 
-                        'bg-red-100 text-red-800'
-                      }
-                    `}
-                  >
-                    Status: {selectedSeller.requestStatus}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+        <SellerDialog
+          selectedSeller={selectedSeller}
+          onClose={() => setSelectedSeller(null)}
+          form={form}
+          onSubmit={onSubmit}
+        />
+)}
     </div>
   );
 }
 
-function SellerList({ 
-  sellers, 
-  onStatusUpdate,
-  onViewDetails
-}: { 
-  sellers: ApiResponse['data']['sellers'],
-  onStatusUpdate: (id: string, status: RequestStatus) => Promise<void>,
-  onViewDetails: (seller: ISeller) => void
-}) {
-  return (
-    <ScrollArea className="h-[calc(100vh-300px)] pr-4">
-      <div className="grid gap-4">
-        {sellers.length === 0 ? (
-          <Card className="text-center shadow-md">
-            <CardContent className="pt-6">
-              <div className="text-gray-500">
-                No sellers found in this category
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          sellers.map((seller) => (
-            <Card 
-              key={seller.id} 
-              className="p-6 hover:shadow-lg transition-shadow duration-300 
-                         border-l-4 
-                         ${seller.requestStatus === 'Pending' ? 'border-yellow-500' : 
-                           seller.requestStatus === 'Accepted' ? 'border-green-500' : 
-                           'border-red-500'
-                         }"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex gap-4 items-center">
-                  <Avatar className="h-14 w-14 border-2">
-                    <AvatarImage src={seller.user.profilePicture || ''} alt={seller.user.name} />
-                    <AvatarFallback className="bg-blue-100 text-blue-800">
-                      {seller.user.name?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-bold text-xl text-blue-800">{seller.businessName}</h3>
-                    <p className="text-sm text-gray-600">{seller.user.name}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap->4">
-                  <Badge 
-                    className={`
-                      ${seller.requestStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
-                        seller.requestStatus === 'Accepted' ? 'bg-green-100 text-green-800' : 
-                        'bg-red-100 text-red-800'
-                      }
-                    `}
-                  >
-                    Status: {seller.requestStatus}
-                  </Badge>
-                  <Button onClick={() => onViewDetails(seller)}>View Details</Button>
-                </div>
-              </div>
-            </Card>
-          ))
-        )}
-      </div>
-    </ScrollArea>
-  );
-} 
+
+
