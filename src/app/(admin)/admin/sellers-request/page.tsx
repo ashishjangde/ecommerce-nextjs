@@ -27,12 +27,12 @@ import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import React from 'react';
 import { useToast } from '@/hooks/use-toast';
-import  {SellerDialog}  from '@/components/sellet/seller-dialog/SellerDialog';
+import  {SellerDialog}  from '@/components/seller/seller-dialog/SellerDialog';
 import { Pagination , ApiResponse , ISeller } from '@/types/seller/seller';
 import AccessDenied from '@/components/ui-error/AccessDenied/AccessDenied';
 import LoadingSpinner from '@/components/ui-error/loading-spinner/LoadingSprinner';
 import ErrorDisplay from '@/components/ui-error/error-display/ErrorDisplay';
-import SellerTabs from '@/components/sellet/seller-tabs/SellerTabs';
+import SellerTabs from '@/components/seller/seller-tabs/SellerTabs';
 import { useUIState } from '@/context/UIStateContext';
 
 
@@ -57,7 +57,7 @@ export default function AdvancedSellerRequestsPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get<ApiResponse>('/api/admin/seller-request');
+      const response = await axios.get<ApiResponse>('/api/seller/request');
       const { sellers, pagination } = response.data.data;
 
       if (Array.isArray(sellers)) {
@@ -154,7 +154,7 @@ export default function AdvancedSellerRequestsPage() {
 
   const handleStatusUpdate = async (sellerId: string, status: RequestStatus) => {
     try {
-     const request =  await axios.patch(`/api/admin/seller-request`, {
+     const request =  await axios.patch(`/api/seller/request`, {
         sellerId,
         status
       });
@@ -209,88 +209,94 @@ export default function AdvancedSellerRequestsPage() {
 
   return (
     <div className="container mx-auto py-8 bg-gray-50 min-h-screen">
-      <Card className="bg-white border-none rounded-2xl  overflow-hidden">
-  <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6">
-    <div className="flex items-center justify-between">
-      <motion.div 
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="flex items-center space-x-4"
-      >
-        <div className="bg-white/20 rounded-full p-3">
-          <Building2 className="h-8 w-8 text-white" />
-        </div>
-        <div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">
-            Seller Requests
-          </h2>
-          <p className="text-white/80 text-sm mt-1">
-            Comprehensive dashboard for managing seller registrations
-          </p>
-        </div>
-      </motion.div>
-      
-      <motion.div 
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="flex items-center space-x-4"
-      >
-        <div className="relative flex-grow">
-          <input 
-            type="text" 
-            placeholder="Search sellers..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="
-              w-64 pl-10 pr-4 py-2.5 
-              bg-white/10 border border-white/20 
-              rounded-xl text-white 
-              placeholder-white/50 
-              focus:outline-none 
-              focus:ring-2 focus:ring-white/30
-            "
-          />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70" />
-        </div>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="
-                bg-white/10 border-white/20 
-                text-white hover:bg-white/20 
-                flex items-center gap-2
-              "
-            >
-              <SortDesc className="h-4 w-4" />
-              Sort: {sortOption}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white shadow-2xl rounded-xl border-none">
-            <DropdownMenuLabel className="text-gray-500">Sort By</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {[
-              { value: 'newest', label: 'Newest First' },
-              { value: 'oldest', label: 'Oldest First' },
-              { value: 'name', label: 'Business Name' }
-            ].map((option) => (
-              <DropdownMenuItem 
-                key={option.value}
-                onClick={() => setSortOption(option.value as 'newest' | 'oldest' | 'name')}
-                className="hover:bg-gray-100 cursor-pointer"
-              >
-                {option.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </motion.div>
-    </div>
-  </div>
-</Card>
+       <Card className="bg-white border-none rounded-2xl overflow-hidden max-w-full">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center space-x-4 w-full sm:w-auto"
+          >
+            <div className="bg-white/20 rounded-full p-3">
+              <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                Seller Requests
+              </h2>
+              <p className="text-white/80 text-xs sm:text-sm mt-1">
+                Comprehensive dashboard for managing seller registrations
+              </p>
+            </div>
+          </motion.div>
 
-     <SellerTabs tabs={tabs} handleStatusUpdate={handleStatusUpdate} sellers={sellers} setSelectedSeller={setSelectedSeller}/>
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto"
+          >
+            <div className="relative w-full sm:w-64">
+              <input
+                type="text"
+                placeholder="Search sellers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="
+                  w-full pl-10 pr-4 py-2.5
+                  bg-white/10 border border-white/20
+                  rounded-xl text-white
+                  placeholder-white/50
+                  focus:outline-none
+                  focus:ring-2 focus:ring-white/30
+                  text-sm
+                "
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70 h-4 w-4" />
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="
+                    bg-white/10 border-white/20
+                    text-white hover:bg-white/20
+                    flex items-center gap-2
+                    w-full sm:w-auto
+                    mt-2 sm:mt-0
+                    text-sm
+                  "
+                >
+                  <SortDesc className="h-4 w-4" />
+                  Sort: {sortOption}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-white shadow-2xl rounded-xl border-none">
+                <DropdownMenuLabel className="text-gray-500">Sort By</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {[
+                  { value: 'newest', label: 'Newest First' },
+                  { value: 'oldest', label: 'Oldest First' },
+                  { value: 'name', label: 'Business Name' }
+                ].map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => setSortOption(option.value as 'newest' | 'oldest' | 'name')}
+                    className="hover:bg-gray-100 cursor-pointer"
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </motion.div>
+        </div>
+      </div>
+    </Card>
+
+     <SellerTabs tabs={tabs} sellers={sellers} setSelectedSeller={setSelectedSeller} handleStatusUpdate={function (id: string, status: RequestStatus): Promise<void> {
+        throw new Error('Function not implemented.');
+      } }/>
    
       {selectedSeller && (
         <SellerDialog

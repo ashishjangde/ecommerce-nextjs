@@ -1,6 +1,6 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
-import SellerList from "@/components/sellet/selller-list/SellerList"; 
+import SellerList from "@/components/seller/selller-list/SellerList"; 
 import { ISeller } from "@/types/seller/seller";
 import { RequestStatus, Seller } from "@prisma/client";
 

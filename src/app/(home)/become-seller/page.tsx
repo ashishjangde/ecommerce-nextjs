@@ -72,7 +72,7 @@ export default function Page () {
         ...data,
         website: data.website || undefined
       };
-     const response = await axios.post('/api/user/request-seller', formData);
+     const response = await axios.post('/api/seller/request-seller', formData);
       if (response.status === 201 && response.data) {
         toast.toast({
           title: "Success",

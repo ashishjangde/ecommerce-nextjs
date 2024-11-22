@@ -9,7 +9,7 @@ import AccessDenied from '@/components/ui-error/AccessDenied/AccessDenied';
 import LoadingSpinner from '@/components/ui-error/loading-spinner/LoadingSprinner';
 import ErrorDisplay from '@/components/ui-error/error-display/ErrorDisplay'
 import { useSession } from 'next-auth/react';
-
+import CategoryForm from '@/components/category/CategoryForm';
 
 export default function Page() {
   
@@ -58,7 +58,7 @@ export default function Page() {
           </div>
         </div>
       </Card>
-
+    <CategoryForm />
     </div>
   );
 }

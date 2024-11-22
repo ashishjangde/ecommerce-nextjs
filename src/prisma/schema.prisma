@@ -26,8 +26,7 @@ model User {
   paymentMethods   PaymentMethod[]
   wishlists        Wishlist[]
   feedbacks        Feedback[]
-
-  Seller Seller[]
+  Seller Seller?
 }
 
 model Seller {
@@ -105,6 +104,8 @@ model ProductVariant {
 model Category {
   id        String     @id @default(cuid())
   name      String     @unique
+  imageurl  String?
+  isFeatured Boolean?
   parentId  String?
   parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children  Category[] @relation("CategoryHierarchy")

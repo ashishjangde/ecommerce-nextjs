@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { ApiResponse } from "./ApiResponse";
 import { ApiError } from "./ApiError";
 
-type AsyncHandler= (req: NextRequest) => Promise<NextResponse | void>;
 
+type AsyncHandler<C = { params?: Record<string, string> }> = (
+  req: NextRequest,
+  context: C
+) => Promise<NextResponse | void>;
 
-const asyncHandler = (fn: AsyncHandler): AsyncHandler => async (req) => {
+const asyncHandler = <C = { params?: Record<string, string> }>(
+  fn: AsyncHandler<C>
+): AsyncHandler<C> => async (req, context) => {
   try {
-    return await fn(req);
+    return await fn(req, context);
   } catch (error) {
     console.error(error);
     if (error instanceof ApiError) {
@@ -21,3 +26,4 @@ const asyncHandler = (fn: AsyncHandler): AsyncHandler => async (req) => {
 };
 
 export default asyncHandler;
+

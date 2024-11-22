@@ -2,16 +2,15 @@ import asyncHandler from "../../_utils/asyncHandler";
 import { UserRole } from "@prisma/client";
 import { ApiResponse } from "../../_utils/ApiResponse";
 import { ApiError } from "../../_utils/ApiError";
-import SignUpSchemaBackend from "@/schema/SignupSchemaBackend";
+import SignUpSchemaBackend from "@/schema/auth/SignupSchemaBackend";
 import { formatValidationErrors } from "../../_utils/FormatValidationError";
 import { userRepository } from "../../_repositoriy/UserRepository";
-import { userRepositoryRedis } from "../../_redisRepository/UserRepositoryRedis";  // Redis Integration
+import { userRepositoryRedis } from "../../_redisRepository/UserRepositoryRedis"; 
 import { hashPassword } from "@/app/api/_helper/PasswordHelper";
 import { genrateVerificationCode, genrateVerificationCodeExpiry } from "../../_helper/VerificationCodeHelper";
 import { NextResponse } from "next/server";
 import { sendVerificationEmail } from "@/helpers/SendVerificationEmail";
 
-// Helper function to create or update the user
 async function createOrUpdateUser({ id, name, email, password }: { id?: string, name: string, email: string, password: string }) {
     const hashedPassword = await hashPassword(password);
     const verificationCode = genrateVerificationCode();
